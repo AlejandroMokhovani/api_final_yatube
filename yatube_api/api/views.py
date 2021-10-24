@@ -1,5 +1,4 @@
-from rest_framework import viewsets, filters
-from rest_framework import permissions
+from rest_framework import viewsets, filters, permissions, mixins
 from django.shortcuts import get_object_or_404
 
 from posts.models import Post, Group, Comment, User, Follow
@@ -54,7 +53,11 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = GroupSerializer
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+# перепишем с использованием миксинов
+# create - для post-запросов
+# list - для get-запросов
+class FollowViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
+                    viewsets.GenericViewSet):
     serializer_class = FollowSerializer
     permission_classes = (permissions.IsAuthenticated, UserIsAuthor)
     filter_backends = (filters.SearchFilter,)
