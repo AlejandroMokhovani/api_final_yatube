@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from django.db.models import F, Q
 
 User = get_user_model()
 
@@ -46,18 +45,18 @@ class Comment(models.Model):
 
 
 class Follow(models.Model):
-    # ссылка на объект пользователя, который подписывается
+    # Ссылка на объект пользователя, который подписывается
     user = models.ForeignKey(
         User, related_name="follower", on_delete=models.CASCADE,
     )
-    # ссылка на объект пользователя, на которого подписываются
+    # Ссылка на объект пользователя, на которого подписываются
     following = models.ForeignKey(
         User, related_name="following", blank=True, null=True,
         on_delete=models.CASCADE,
     )
 
-    # лучше костыль в руке чем CheckConstraint в небе
-    # но замечание устранено - проверка на уровне модели
+    # Лучше костыль в руке чем CheckConstraint в небе
+    # но замечание устранено - проверка на уровне модели.
     def clean(self):
         if self.user == self.following:
             raise serializers.ValidationError(
@@ -74,8 +73,8 @@ class Follow(models.Model):
                 fields=['user', 'following'],
                 name='unique_following'
             ),
-            # опытные люди сказали что это 102% рабочий код, но почему то нет
-            # и, к сожалению, никто не может объяснить как это работает
+            # Опытные люди сказали что это 102% рабочий код, но почему то нет
+            # и, к сожалению, никто не может объяснить как это работает.
 
             #     models.CheckConstraint(
             #     check=~models.Q(user=models.F('following')),
