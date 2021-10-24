@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from django.db.models import Q, F
 
 User = get_user_model()
 
@@ -55,29 +56,15 @@ class Follow(models.Model):
         on_delete=models.CASCADE,
     )
 
-    # Лучше костыль в руке чем CheckConstraint в небе
-    # но замечание устранено - проверка на уровне модели.
-    def clean(self):
-        if self.user == self.following:
-            raise serializers.ValidationError(
-                _('Себя фоловить нельзя!'), code='invalid'
-            )
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        return super(Follow, self).save(*args, **kwargs)
-
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'following'],
                 name='unique_following'
             ),
-            # Опытные люди сказали что это 102% рабочий код, но почему то нет
-            # и, к сожалению, никто не может объяснить как это работает.
 
-            #     models.CheckConstraint(
-            #     check=~models.Q(user=models.F('following')),
-            #     name='not_yourself_follow'
-            # ),
+            models.CheckConstraint(
+                check=~Q(user=F("following")),
+                name='dont follow youself'
+            ),
         ]
