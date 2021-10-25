@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from django.db.models import Q, F
 
@@ -65,6 +64,6 @@ class Follow(models.Model):
 
             models.CheckConstraint(
                 check=~Q(user=F("following")),
-                name='dont follow youself'
+                name='dont_follow_youself'
             ),
         ]

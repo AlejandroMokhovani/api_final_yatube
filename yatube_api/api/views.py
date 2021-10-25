@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from posts.models import Post, Group, Comment, User, Follow
 from .serializers import PostSerializer, GroupSerializer, CommentSerializer, \
     FollowSerializer
-from .permissions import UserIsAuthor
+from .permissions import UserIsAuthor, AuthorOrReadOnly
 
 from rest_framework.pagination import LimitOffsetPagination
 
@@ -13,22 +13,18 @@ class PostViewSet(viewsets.ModelViewSet):
     """Все доступные методы."""
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, UserIsAuthor)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          AuthorOrReadOnly)
     pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def get_permissions(self):
-        if self.action == 'retrieve':
-            return (permissions.IsAuthenticatedOrReadOnly(),)
-        return super().get_permissions()
-
 
 class CommentViewSet(viewsets.ModelViewSet):
     """Все доступные методы."""
     serializer_class = CommentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, UserIsAuthor)
+    permission_classes = (AuthorOrReadOnly,)
 
     def _get_post(self):
         return get_object_or_404(Post, id=self.kwargs['post_id'])
@@ -41,11 +37,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         post = self._get_post()
         serializer.save(post=post, author=self.request.user)
 
-    def get_permissions(self):
-        if self.action == 'retrieve':
-            return (permissions.IsAuthenticatedOrReadOnly(),)
-        return super().get_permissions()
-
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     """Только метод Get."""
@@ -53,9 +44,6 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = GroupSerializer
 
 
-# перепишем с использованием миксинов
-# create - для post-запросов
-# list - для get-запросов
 class FollowViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
     serializer_class = FollowSerializer
